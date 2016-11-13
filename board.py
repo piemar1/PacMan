@@ -2,9 +2,10 @@
 
 
 from random import choice
-
 from OpenGL import GL as gl
 from OpenGL import GLUT as glut
+
+import solid_data as data
 
 
 maze = [
@@ -31,6 +32,12 @@ maze = [
 ]
 
 
+def set_color(color):
+    """Function sets the color."""
+    r, g, b = color
+    gl.glColor3f(r, g, b)
+
+
 class Coin:
     """Class of Coin object."""
 
@@ -43,17 +50,16 @@ class Coin:
         self.pos_x = pos_x
         self.pos_z = pos_z
         self.radius = 0.1
-        self.coin_color = 0.9, 0.9, 0  # coins color yellow
+        self.coin_color = data.COIN_COLOR  # coin color
         self.super_coin = False
 
     def draw(self):
         """Function draws coin."""
 
-        r, g, b = self.coin_color
-        gl.glColor3f(r, g, b)
+        set_color(self.coin_color)
 
         gl.glPushMatrix()
-        gl.glTranslatef(self.pos_z + 0.5, 0.0, self.pos_x + 0.5)
+        gl.glTranslatef(self.pos_x + 0.5, 0.0, self.pos_z + 0.5)
         glut.glutSolidSphere(self.radius, 10, 10)
         gl.glPopMatrix()
 
@@ -70,14 +76,121 @@ class SuperCoin(Coin):
 
         super().__init__(pos_x, pos_z)
         self.radius = 0.25
-        self.coin_color = 0.9, 0.3, 0  # super coins color red
+        self.coin_color = data.SUPER_COIN_COLOR  # super coins color red
         self.super_coin = True
+
+
+class Block:
+    """Class of block of wall, element of board."""
+
+    def __init__(self, pos_xw, pos_zn, walls):
+        """
+
+        :param pos_xw: position of the west/north corner
+         of block on x axis
+        :param pos_zn: position of the west/north corner
+        of block on z axis
+        :param walls: information about which wall should
+        be draw in for block
+            'S' south wall
+            'N' north wall
+            'E' east wall
+            'W' west wall
+        """
+        self.pos_xw = pos_xw
+        self.pos_xe = pos_xw + 1
+        self.pos_zn = pos_zn
+        self.pos_zs = pos_zn + 1
+        self.walls = walls
+
+        self.floor_color = data.FLOOR_COLOR     # floor color
+        self.celling_color = data.CELING_COLOR  # celling color
+        self.celing_level = data.CELLING_LEVEL   # height of celling
+        self.floor_level = data.FLOOR_LEVEL     # height of floor
+
+    def __str__(self):
+        return "Block with position: " + \
+               str(self.pos_xw) + "," + \
+               str(self.pos_zs) + "," + self.walls
+
+    def _draw_vertical_square(self, axis):
+        """ Function draw vertical square on axis x or z.
+
+        :param axis: axis type where square will be draw
+               if axis in "NS" - square is on X axis
+               if axis in "WE" - square is on Z axis
+        """
+
+        if axis in "NS":
+            pos_z = self.pos_zn if "N" in axis else self.pos_zs
+
+            # Start drawing a polygon
+            gl.glBegin(gl.GL_QUADS)
+            set_color(self.floor_color)
+            # Top Left
+            gl.glVertex3f(self.pos_xw,  self.floor_level, pos_z)
+            # Top Right
+            gl.glVertex3f(self.pos_xe, self.floor_level, pos_z)
+
+            set_color(self.celling_color)
+            # Bottom Right
+            gl.glVertex3f(self.pos_xe, self.celing_level, pos_z)
+            # Bottom Left
+            gl.glVertex3f(self.pos_xw,  self.celing_level, pos_z)
+            gl.glEnd()
+
+        elif axis in "WE":
+
+            pos_x = self.pos_xe if "E" in axis else self.pos_xw
+
+            # Start drawing a polygon
+            gl.glBegin(gl.GL_QUADS)
+            set_color(self.floor_color)
+            # Top Left
+            gl.glVertex3f(pos_x, self.floor_level, self.pos_zs)
+            # Top Right
+            gl.glVertex3f(pos_x, self.floor_level, self.pos_zn)
+
+            set_color(self.celling_color)
+            # Bottom Right
+            gl.glVertex3f(pos_x, self.celing_level, self.pos_zn)
+            # Bottom Left
+            gl.glVertex3f(pos_x, self.celing_level, self.pos_zs)
+            gl.glEnd()
+
+        else:
+            print("ERROR during drawing vertical squares:"
+                  "function name: board._draw_vertical_square")
+
+    def _draw_celling(self):
+        """Function draw celing of the block."""
+
+        # draw block celling
+        gl.glBegin(gl.GL_QUADS)  # Start drawing a polygon
+        set_color(self.celling_color)
+
+        gl.glVertex3f(self.pos_xw, self.celing_level, self.pos_zn)
+        gl.glVertex3f(self.pos_xw, self.celing_level, self.pos_zs)
+        gl.glVertex3f(self.pos_xe, self.celing_level, self.pos_zs)
+        gl.glVertex3f(self.pos_xe, self.celing_level, self.pos_zn)
+        gl.glEnd()
+
+    def draw_block(self):
+        """ Function draws the block."""
+
+        # draw celling
+        self._draw_celling()
+
+        # draw back, front, left and right wall
+        for direction in "NSWE":
+            if direction in self.walls:
+                self._draw_vertical_square(direction)
 
 
 class SingleBoard:
     """Singleton Board class. """
 
-    class __Board:
+    class __Board():
         """Class of Board object.
 
         Class contain all elements and method for crating and
@@ -94,97 +207,77 @@ class SingleBoard:
 
             maze - should be a list of lists containing anly integr 0 or 1.
             0 - empty square, floor
-            1 - square of wall
+            1 - square with walls
             """
 
-            self.maze_len = len(maze[0])        # width of maze
-            self.super_coins_no = 5             # number of super-coins
+            self.maze_len = len(maze)           # len of maze
+            self.maze_row_len = len(maze[0])    # width of maze
 
-            self.wall_top = 1                   # height of celling
-            self.wall_bottom = -1.0             # height of floor
+            self.super_coins_no = 5              # number of super-coins
 
-            self.floor_color = 0.15, 0.15, 0.15  # floor color
-            self.celling_color = 0, 0, 0.8       # celling color
+            self.floor_level = data.FLOOR_LEVEL  # height of floor
 
-            # maze transformation into a "drawable" lists
-            self.floor_pos, self.transformed_maze = self._transform_maze(maze)
+            self.floor_color = data.FLOOR_COLOR  # floor color
 
-            # Coins creation
-            self.coins = self._create_coins()
+            self.blocks = []                     # blocks in the board
+            self.coins = []                      # coins
 
-            # Super Coins creation
+            self._create_board_elements(maze)
             self.super_coins = self._create_super_coins()
+            self.block_positions = self.get_block_positions()
 
-        @staticmethod
-        def _transform_maze(maze):
-            """Method transforms maze object.
+        def get_block_positions(self):
 
-            Method return 2 list (floor_pos, wall_pos)
-            containing all information needed for draw a board.
+            return set((block.pos_xw, block.pos_zn) for block in self.blocks)
 
-            floor_pos - list containing position (row, column)
-             of all floor squares
+        def _create_board_elements(self, maze):
+            """Method creating all objcts of board.
 
-            transformed_maze - transformed maze list,
-            instead of 1 (wall) there is a string with
-            information about which wall should be draw in
-            particular position in maze
-            'S' south wall
-            'N' north wall
-            'E' east wall
-            'W' west wall
+            Function creates list of Coin objects as a
+            attribute of Board.
 
-            :param maze: maze
-            :return: floor_pos
-            :return: transformed_maze
+            Function creates list of Block objects as a
+            attribute of Board.
+
+            :param maze: maze - should be a list of lists
+            containing anly integr 0 or 1.
+            0 - empty square, floor
+            1 - square with walls
             """
 
-            floor_pos, transformed_maze, maze_len = [], [], len(maze) - 1
-            floor_append = floor_pos.append
-            transformed_maze_append = transformed_maze.append
+            maze_size = len(maze) - 1
+            coins_append = self.coins.append
+            blocks_append = self.blocks.append
 
             for row_no, row in enumerate(maze):
                 row_len = len(row) - 1
 
-                new_row = []
-                new_row_append = new_row.append
-
                 for sq_no, square in enumerate(row):
                     if not square:
-
-                        floor_append([row_no, sq_no])
-                        new_row_append(square)
-
+                        coins_append(Coin(sq_no, row_no))
                     else:
-                        new_square = []
-                        new_square_append = new_square.append
+                        walls = []
+                        walls_append = walls.append
                         if not row_no or not maze[row_no-1][sq_no]:
-                            new_square_append("N")
+                            walls_append("N")
                         if not sq_no or not maze[row_no][sq_no-1]:
-                            new_square_append("W")
+                            walls_append("W")
                         if sq_no == row_len or not maze[row_no][sq_no+1]:
-                            new_square_append("E")
-                        if row_no == maze_len or not maze[row_no+1][sq_no]:
-                            new_square_append("S")
-                        new_row_append(''.join(new_square))
+                            walls_append("E")
+                        if row_no == maze_size or not maze[row_no+1][sq_no]:
+                            walls_append("S")
 
-                transformed_maze_append(new_row)
+                        blocks_append(Block(sq_no, row_no, ''.join(walls)))
 
-            return floor_pos, transformed_maze
-
-        def _create_coins(self):
-            """Function creates list of Coin objects as a
-            attribute of Board."""
-
-            return [Coin(x, z) for x, z in self.floor_pos]
+            # for block in self.blocks:
+            #     print(block)
 
         def _create_super_coins(self):
             """Function creates list of SuperCoin objects as a
             attribute of Board."""
 
-            return [SuperCoin(x, z)
-                    for x, z in [choice(self.floor_pos)
-                    for n in range(self.super_coins_no)]]
+            return [SuperCoin(coin.pos_x, coin.pos_z) for coin in
+                    [choice(self.coins) for n in range(self.super_coins_no)]]
 
         @staticmethod
         def load_textures(image):
@@ -231,101 +324,16 @@ class SingleBoard:
             )
             gl.glEnable(gl.GL_TEXTURE_2D)
 
-        @staticmethod
-        def _set_color(color):
-            """Function set color."""
-            r, g, b = color
-            gl.glColor3f(r, g, b)
+        def _draw_floor(self):
+            """ Function draw floor of the board."""
 
-        def _draw_horizontal_square(self, pos_x, pos_z, color, height):
-            """ Function draw horizontal square.
-
-            :param pos_x: int, position on x axis of left front corner
-            :param pos_z: int, position on z axis of left front corner
-            :param color: color, tuple with 3 floats
-            :param height: int, position on y axis
-            :return:
-            """
-            pos_x1, pos_z1 = pos_x + 1, pos_z + 1
-
-            gl.glBegin(gl.GL_QUADS)        # Start drawing a polygon
-            self._set_color(color)
-            gl.glVertex3f(pos_x,  height, pos_z)
-            gl.glVertex3f(pos_x1, height, pos_z)
-            gl.glVertex3f(pos_x1, height, pos_z1)
-            gl.glVertex3f(pos_x,  height, pos_z1)
+            gl.glBegin(gl.GL_QUADS)               # Start drawing a polygon
+            set_color(self.floor_color)
+            gl.glVertex3f(0,  self.floor_level, 0)
+            gl.glVertex3f(self.maze_row_len, self.floor_level, 0)
+            gl.glVertex3f(self.maze_row_len, self.floor_level, self.maze_len)
+            gl.glVertex3f(0,  self.floor_level, self.maze_len)
             gl.glEnd()
-
-        def _draw_vertical_square(self, axis, pos_x, pos_z):
-            """ Function draw vertical square on x or z axis.
-
-            :param axis: axis type where square will be draw
-                   if axis in "XNS" - square is on X axis
-                   if axis in "ZWE" - square is on Z axis
-            :param pos_x: int, position on x axis of left front corner
-            :param pos_z: int, position on z axis of left front corner
-            """
-
-            pos_x1, pos_z1 = pos_x + 1, pos_z + 1
-            color_b, color_t = self.floor_color, self.celling_color
-
-            if axis in "XNS":
-                if axis == "S":
-                    pos_z += 1
-
-                gl.glBegin(gl.GL_QUADS)  # Start drawing a polygon
-                self._set_color(color_b)
-                gl.glVertex3f(pos_x,  self.wall_bottom, pos_z)  # Top Left
-                gl.glVertex3f(pos_x1, self.wall_bottom, pos_z)  # Top Right
-
-                self._set_color(color_t)
-                gl.glVertex3f(pos_x1, self.wall_top, pos_z)  # Bottom Right
-                gl.glVertex3f(pos_x,  self.wall_top, pos_z)  # Bottom Left
-                gl.glEnd()
-
-            elif axis in "ZWE":
-                if axis == "E":
-                    pos_x += 1
-
-                gl.glBegin(gl.GL_QUADS)  # Start drawing a polygon
-                self._set_color(color_b)
-                gl.glVertex3f(pos_x, self.wall_bottom, pos_z)  # Top Left
-                gl.glVertex3f(pos_x, self.wall_bottom, pos_z1)  # Top Right
-
-                self._set_color(color_t)
-                gl.glVertex3f(pos_x, self.wall_top, pos_z1)  # Bottom Right
-                gl.glVertex3f(pos_x, self.wall_top, pos_z)  # Bottom Left
-                gl.glEnd()
-
-            else:
-                print("ERROR during drawing vertical squares:"
-                      "function name: board._draw_vertical_square")
-
-        def _draw_floor(self, pos_x, pos_z):
-            """ Function draws floor squares."""
-
-            self._draw_horizontal_square(
-                pos_x,
-                pos_z,
-                self.floor_color,
-                self.wall_bottom
-            )
-
-        def _draw_wall(self, pos_x, pos_z, square):
-            """ Function draws wall squares."""
-
-            # draw celling
-            self._draw_horizontal_square(
-                pos_x,
-                pos_z,
-                self.celling_color,
-                self.wall_top
-            )
-
-            # draw back, front, left and right wall
-            for axis in "NSWE":
-                if axis in square:
-                    self._draw_vertical_square(axis, pos_x, pos_z)
 
         def draw(self):
             """ The main drawing function.
@@ -333,14 +341,11 @@ class SingleBoard:
             Function draws all board elements, floor, blocks and coins.
             """
 
-            for row_no, row in enumerate(self.transformed_maze):
-                for square_no, square in enumerate(row):
-                    if not square:
-                        # draw the floor
-                        self._draw_floor(square_no, row_no)
-                    else:
-                        # draw the walls
-                        self._draw_wall(square_no, row_no, square)
+            # draw the board floor
+            self._draw_floor()
+
+            for block in self.blocks:
+                block.draw_block()
 
             # draw the coins
             for coin in self.coins:
