@@ -182,9 +182,9 @@ class Block:
         self._draw_celling()
 
         # draw back, front, left and right wall
-        for direction in "NSWE":
-            if direction in self.walls:
-                self._draw_vertical_square(direction)
+        for wall in "NSWE":
+            if wall in self.walls:
+                self._draw_vertical_square(wall)
 
 
 class SingleBoard:

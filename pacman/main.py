@@ -215,7 +215,7 @@ class Main:
         # Reset The View
         gl.glLoadIdentity()
         gl.glTranslatef(-self.board.maze_row_len/2, 10.0, -30.0)
-        gl.glRotate(80, 1, 0, 0)
+        gl.glRotate(60, 1, 0, 0)
 
         self.board.draw()
         self.pac_man.draw()
