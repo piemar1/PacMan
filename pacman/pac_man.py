@@ -1,7 +1,6 @@
 from OpenGL import GL as gl
 from OpenGL import GLUT as glut
 
-import solid_data as data
 
 def set_color(color):
     """Function sets the color."""

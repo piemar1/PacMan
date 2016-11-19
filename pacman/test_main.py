@@ -1,5 +1,3 @@
-import pytest
-
 from main import Main
 from board import SingleBoard
 from pac_man import SinglePacMan
@@ -154,8 +152,3 @@ class TestMain:
 
         self.main.collision_coin(self.board.coins[0])
         assert len(self.board.coins) == coin_no
-
-
-
-
-
