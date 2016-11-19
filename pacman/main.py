@@ -2,6 +2,7 @@
 
 import sys
 from time import time
+from math import floor, ceil, hypot
 
 from OpenGL import GL as gl
 from OpenGL import GLUT as glut
@@ -62,9 +63,9 @@ class Main:
         # Enables Smooth Color Shading
         gl.glShadeModel(gl.GL_SMOOTH)
 
+        # Reset The Projection Matrix.
         gl.glMatrixMode(gl.GL_PROJECTION)
 
-        # Reset The Projection Matrix.
         # Calculate The Aspect Ratio Of The Window.
         gl.glLoadIdentity()
         glu.gluPerspective(45.0, float(width)/float(height), 0.1, 100.0)
@@ -102,13 +103,18 @@ class Main:
 
     def get_pacman_possible_move(self):
 
+        # if not self.pac_man.direction:
+        #     return False
+
         pos_x, pos_z = self.pac_man.pos_x, self.pac_man.pos_z
         pos_x_mod, pos_z_mod = pos_x % 1, pos_z % 1
-        pos_x_div, pos_z_div = pos_x // 1, pos_z // 1
+        pos_x_floor, pos_z_floor = floor(pos_x), floor(pos_z)
+
         block_positions = self.board.block_positions
         possible_moves = []
 
-        if not pos_x_mod and not pos_z_mod:
+        if not any([bool(pos_x_mod), bool(pos_z_mod)]):
+
             if (pos_x - 1, pos_z) not in block_positions:
                 possible_moves.append('W')
             if (pos_x + 1, pos_z) not in block_positions:
@@ -120,31 +126,40 @@ class Main:
 
         elif pos_x_mod and not pos_z_mod:
             possible_moves.append('WE')
-            if (pos_x_div, pos_z - 1) not in block_positions and \
-               (pos_x_div + 1, pos_z - 1) not in block_positions:
+
+            blocks = [
+                (pos_x_floor, pos_z - 1),
+                (ceil(pos_x), pos_z - 1)
+            ]
+            if all([True if block not in block_positions else False for block in blocks ]):
                 possible_moves.append('N')
 
-            if (pos_x_div, pos_z + 1) not in block_positions and \
-               (pos_x_div + 1, pos_z + 1) not in block_positions:
+            blocks = [
+                (pos_x_floor, pos_z + 1),
+                (ceil(pos_x), pos_z + 1)
+            ]
+            if all([True if block not in block_positions else False for block in blocks ]):
                 possible_moves.append('S')
 
         elif not pos_x_mod and pos_z_mod:
             possible_moves.append('NS')
-
-            if (pos_x - 1, pos_z_div - 1) not in block_positions and \
-               (pos_x - 1, pos_z_div) not in block_positions:
+            blocks = [
+                (pos_x - 1, pos_z_floor - 1),
+                (pos_x - 1, pos_z_floor)
+            ]
+            if all([True if block not in block_positions else False for block in blocks]):
                 possible_moves.append('W')
 
-            if (pos_x + 1, pos_z_div) not in block_positions and \
-               (pos_x + 1, pos_z_div - 1) not in block_positions:
+            blocks = [
+                (pos_x + 1, pos_z_floor - 1),
+                (pos_x + 1, pos_z_floor)
+            ]
+            if all([True if block not in block_positions else False for block in blocks]):
                 possible_moves.append('E')
-
-        elif pos_x_mod and pos_z_mod:
-            possible_moves.append('NSWE')
 
         return ''.join(possible_moves)
 
-    def out_side_board(self):
+    def outside_board(self):
 
         if self.pac_man.pos_x < 0:
             self.pac_man.pos_x = self.board.maze_row_len
@@ -160,11 +175,11 @@ class Main:
 
     def collision_coin(self, coin):
 
-        wall1 = (self.pac_man.pos_x - coin.pos_x)**2
-        wall2 = (self.pac_man.pos_z - coin.pos_z)**2
-        radius = (self.pac_man.radius + coin.radius)**2
+        wall1 = self.pac_man.pos_x - coin.pos_x
+        wall2 = self.pac_man.pos_z - coin.pos_z
+        radius = self.pac_man.radius + coin.radius
 
-        if radius > wall1 + wall2:
+        if radius >= hypot(wall1, wall2):
             if coin.super_coin:
                 self.board.super_coins.remove(coin)
             else:
@@ -201,14 +216,6 @@ class Main:
     def draw_gl_scene(self):
         """The function draws all game elements."""
 
-        # if time() - self.time_point > 0.5:
-        #     self.time_point = time()
-
-        # print("pacman position --> ", self.pac_man.pos_x, " ", self.pac_man.pos_z)
-        # print("self.pac_man.next_direction", self.pac_man.next_direction)
-        # print("self.pac_man.direction", self.pac_man.direction)
-        # print(self.get_pacman_possible_move())
-
         # Clear The Screen And The Depth Buffer
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
@@ -221,6 +228,7 @@ class Main:
         self.pac_man.draw()
 
         if self.pac_man.next_direction and \
+           self.pac_man.pos_x%1 == 0 and self.pac_man.pos_z%1 == 0 and \
            self.pac_man.next_direction in self.get_pacman_possible_move():
             self.pac_man.direction = self.pac_man.next_direction
             self.pac_man.next_direction = ''
@@ -229,7 +237,7 @@ class Main:
            self.pac_man.direction in self.get_pacman_possible_move():
             self.pac_man.move()
 
-        self.out_side_board()
+        self.outside_board()
 
         for coin in self.board.coins:
             self.collision_coin(coin)

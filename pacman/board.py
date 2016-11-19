@@ -258,19 +258,20 @@ class SingleBoard:
                     else:
                         walls = []
                         walls_append = walls.append
-                        if not row_no or not maze[row_no-1][sq_no]:
+
+                        if not all([row_no, maze[row_no-1][sq_no]]):
                             walls_append("N")
-                        if not sq_no or not maze[row_no][sq_no-1]:
+
+                        if not all([sq_no, maze[row_no][sq_no-1]]):
                             walls_append("W")
+
                         if sq_no == row_len or not maze[row_no][sq_no+1]:
                             walls_append("E")
+
                         if row_no == maze_size or not maze[row_no+1][sq_no]:
                             walls_append("S")
 
                         blocks_append(Block(sq_no, row_no, ''.join(walls)))
-
-            # for block in self.blocks:
-            #     print(block)
 
         def _create_super_coins(self):
             """Function creates list of SuperCoin objects as a
