@@ -1,7 +1,4 @@
 from main import Main
-from board import SingleBoard
-from pac_man import SinglePacMan
-
 
 test_maze = [
     [1, 1, 1, 1, 1, 1, 1],
@@ -18,20 +15,17 @@ test_maze = [
 
 class TestMain:
 
-    main = Main()
-
-    board = SingleBoard(test_maze)
-    board = board.instance
-
-    pacman = SinglePacMan(1, 1)
-    pacman = pacman.instance
+    def setup_method(self):
+        self.main = Main(test_maze)
+        self.board = self.main.board
+        self.pacman = self.main.pacman
 
     def set_pacman_to_position(self, x, y):
+        """"""
         self.pacman.pos_x, self.pacman.pos_z = x, y
 
     def test_get_pacman_possible_move1(self):
         """"""
-        self.set_pacman_to_position(1, 1)
         assert self.main.get_pacman_possible_move() == "ES"
 
     def test_get_pacman_possible_move2(self):
@@ -139,16 +133,16 @@ class TestMain:
 
     def test_collision_coin(self):
         """"""
-        self.set_pacman_to_position(1.1, 1)
-        coin_no = len(self.board.coins)
-
-        self.main.collision_coin(self.board.coins[0])
-        assert len(self.board.coins) == coin_no - 1
-
-    def test_collision_coin2(self):
-        """"""
-        self.set_pacman_to_position(1.11, 1)
+        self.set_pacman_to_position(1.60, 1)
         coin_no = len(self.board.coins)
 
         self.main.collision_coin(self.board.coins[0])
         assert len(self.board.coins) == coin_no
+
+    def test_collision_coin2(self):
+        """"""
+        self.set_pacman_to_position(1.59, 1)
+        coin_no = len(self.board.coins)
+
+        self.main.collision_coin(self.board.coins[0])
+        assert len(self.board.coins) == coin_no - 1

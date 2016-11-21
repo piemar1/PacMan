@@ -187,179 +187,123 @@ class Block:
                 self._draw_vertical_square(wall)
 
 
-class SingleBoard:
-    """Singleton Board class. """
+class Board:
+    """Class of Board object.
 
-    class __Board():
-        """Class of Board object.
-
-        Class contain all elements and method for crating and
-        drawing the board, containig floor, walls and conis."""
-
-        def __init__(self, maze):
-            """Constructor method of __Board class.
-
-            Constructor initializes many board parameters and
-            coins objects. Contains methods responsible for
-            board drawing.
-
-            :param maze: maze
-
-            maze - should be a list of lists containing anly integr 0 or 1.
-            0 - empty square, floor
-            1 - square with walls
-            """
-
-            self.maze_len = len(maze)           # len of maze
-            self.maze_row_len = len(maze[0])    # width of maze
-
-            self.super_coins_no = 5              # number of super-coins
-
-            self.floor_level = data.FLOOR_LEVEL  # height of floor
-
-            self.floor_color = data.FLOOR_COLOR  # floor color
-
-            self.blocks = []                     # blocks in the board
-            self.coins = []                      # coins
-
-            self._create_board_elements(maze)
-            self.super_coins = self._create_super_coins()
-            self.block_positions = self.get_block_positions()
-
-        def get_block_positions(self):
-
-            return set((block.pos_xw, block.pos_zn) for block in self.blocks)
-
-        def _create_board_elements(self, maze):
-            """Method creating all objcts of board.
-
-            Function creates list of Coin objects as a
-            attribute of Board.
-
-            Function creates list of Block objects as a
-            attribute of Board.
-
-            :param maze: maze - should be a list of lists
-            containing anly integr 0 or 1.
-            0 - empty square, floor
-            1 - square with walls
-            """
-
-            maze_size = len(maze) - 1
-            coins_append = self.coins.append
-            blocks_append = self.blocks.append
-
-            for row_no, row in enumerate(maze):
-                row_len = len(row) - 1
-
-                for sq_no, square in enumerate(row):
-                    if not square:
-                        coins_append(Coin(sq_no, row_no))
-                    else:
-                        walls = []
-                        walls_append = walls.append
-
-                        if not all([row_no, maze[row_no-1][sq_no]]):
-                            walls_append("N")
-
-                        if not all([sq_no, maze[row_no][sq_no-1]]):
-                            walls_append("W")
-
-                        if sq_no == row_len or not maze[row_no][sq_no+1]:
-                            walls_append("E")
-
-                        if row_no == maze_size or not maze[row_no+1][sq_no]:
-                            walls_append("S")
-
-                        blocks_append(Block(sq_no, row_no, ''.join(walls)))
-
-        def _create_super_coins(self):
-            """Function creates list of SuperCoin objects as a
-            attribute of Board."""
-
-            return [SuperCoin(coin.pos_x, coin.pos_z) for coin in
-                    [choice(self.coins) for n in range(self.super_coins_no)]]
-
-        @staticmethod
-        def load_textures(image):
-            """Function loads texture from image file.
-
-            :param image: texture image file
-            """
-            image = image.tobytes("raw", "RGBX", 0, -1)
-            ix, iy = image.size[0], image.size[1]
-
-            # Create Texture
-            # 2d texture (x and y size)
-            gl.glBindTexture(gl.GL_TEXTURE_2D, gl.glGenTextures(1))
-
-            gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
-            gl.glTexImage2D(
-                gl.GL_TEXTURE_2D,
-                0, 3,
-                ix, iy, 0,
-                gl.GL_RGBA,
-                gl.GL_UNSIGNED_BYTE,
-                image
-            )
-            gl.glTexParameterf(
-                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP
-            )
-            gl.glTexParameterf(
-                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP
-            )
-            gl.glTexParameterf(
-                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT
-            )
-            gl.glTexParameterf(
-                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT
-            )
-            gl.glTexParameterf(
-                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST
-            )
-            gl.glTexParameterf(
-                gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST
-            )
-            gl.glTexEnvf(
-                gl.GL_TEXTURE_ENV, gl.GL_TEXTURE_ENV_MODE, gl.GL_DECAL
-            )
-            gl.glEnable(gl.GL_TEXTURE_2D)
-
-        def _draw_floor(self):
-            """ Function draw floor of the board."""
-
-            gl.glBegin(gl.GL_QUADS)               # Start drawing a polygon
-            set_color(self.floor_color)
-            gl.glVertex3f(0,  self.floor_level, 0)
-            gl.glVertex3f(self.maze_row_len, self.floor_level, 0)
-            gl.glVertex3f(self.maze_row_len, self.floor_level, self.maze_len)
-            gl.glVertex3f(0,  self.floor_level, self.maze_len)
-            gl.glEnd()
-
-        def draw(self):
-            """ The main drawing function.
-
-            Function draws all board elements, floor, blocks and coins.
-            """
-
-            # draw the board floor
-            self._draw_floor()
-
-            for block in self.blocks:
-                block.draw_block()
-
-            # draw the coins
-            for coin in self.coins:
-                coin.draw()
-
-            # draw the super_coins
-            for coin in self.super_coins:
-                coin.draw()
-
-    instance = None
+    Class contain all elements and method for crating and
+    drawing the board, containig floor, walls and conis."""
 
     def __init__(self, maze):
-        if not SingleBoard.instance:
-            SingleBoard.instance = SingleBoard.__Board(maze)
-        else:
-            return
+        """Constructor method of __Board class.
+
+        Constructor initializes many board parameters and
+        coins objects. Contains methods responsible for
+        board drawing.
+
+        :param maze: maze
+
+        maze - should be a list of lists containing anly integr 0 or 1.
+        0 - empty square, floor
+        1 - square with walls
+        """
+
+        self.maze_len = len(maze)           # len of maze
+        self.maze_row_len = len(maze[0])    # width of maze
+
+        self.super_coins_no = 5              # number of super-coins
+
+        self.floor_level = data.FLOOR_LEVEL  # height of floor
+
+        self.floor_color = data.FLOOR_COLOR  # floor color
+
+        self.blocks = []                     # blocks in the board
+        self.coins = []                      # coins
+
+        self._create_board_elements(maze)
+        self.super_coins = self._create_super_coins()
+        self.block_positions = self.get_block_positions()
+
+    def get_block_positions(self):
+
+        return set((block.pos_xw, block.pos_zn) for block in self.blocks)
+
+    def _create_board_elements(self, maze):
+        """Method creating all objcts of board.
+
+        Function creates list of Coin objects as a
+        attribute of Board.
+
+        Function creates list of Block objects as a
+        attribute of Board.
+
+        :param maze: maze - should be a list of lists
+        containing anly integr 0 or 1.
+        0 - empty square, floor
+        1 - square with walls
+        """
+
+        maze_size = len(maze) - 1
+        coins_append = self.coins.append
+        blocks_append = self.blocks.append
+
+        for row_no, row in enumerate(maze):
+            row_len = len(row) - 1
+
+            for sq_no, square in enumerate(row):
+                if not square:
+                    coins_append(Coin(sq_no, row_no))
+                else:
+                    walls = []
+                    walls_append = walls.append
+
+                    if not all([row_no, maze[row_no-1][sq_no]]):
+                        walls_append("N")
+
+                    if not all([sq_no, maze[row_no][sq_no-1]]):
+                        walls_append("W")
+
+                    if sq_no == row_len or not maze[row_no][sq_no+1]:
+                        walls_append("E")
+
+                    if row_no == maze_size or not maze[row_no+1][sq_no]:
+                        walls_append("S")
+
+                    blocks_append(Block(sq_no, row_no, ''.join(walls)))
+
+    def _create_super_coins(self):
+        """Function creates list of SuperCoin objects as a
+        attribute of Board."""
+
+        return [SuperCoin(coin.pos_x, coin.pos_z) for coin in
+                [choice(self.coins) for n in range(self.super_coins_no)]]
+
+    def _draw_floor(self):
+        """ Function draw floor of the board."""
+
+        gl.glBegin(gl.GL_QUADS)               # Start drawing a polygon
+        set_color(self.floor_color)
+        gl.glVertex3f(0,  self.floor_level, 0)
+        gl.glVertex3f(self.maze_row_len, self.floor_level, 0)
+        gl.glVertex3f(self.maze_row_len, self.floor_level, self.maze_len)
+        gl.glVertex3f(0,  self.floor_level, self.maze_len)
+        gl.glEnd()
+
+    def draw(self):
+        """ The main drawing function.
+
+        Function draws all board elements, floor, blocks and coins.
+        """
+
+        # draw the board floor
+        self._draw_floor()
+
+        for block in self.blocks:
+            block.draw_block()
+
+        # draw the coins
+        for coin in self.coins:
+            coin.draw()
+
+        # draw the super_coins
+        for coin in self.super_coins:
+            coin.draw()

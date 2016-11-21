@@ -7,7 +7,7 @@ from OpenGL import GLUT as glut
 from OpenGL import GLU as glu
 
 import board
-import pac_man
+import pacman
 
 
 class Main:
@@ -17,7 +17,7 @@ class Main:
     Class contains all method for initialising OpenGL objects.
     Contains also all game objects as board, coins, PacMan and ghosts.
     """
-    def __init__(self):
+    def __init__(self, maze):
         """Constructor method of Main Class.
 
         It initialases all object needed for start the game
@@ -27,12 +27,10 @@ class Main:
         self.fps_no = 0
 
         # board creating
-        self.board = board.SingleBoard(board.maze)
-        self.board = self.board.instance
+        self.board = board.Board(maze)
 
         # PacMan player creating
-        self.pac_man = pac_man.SinglePacMan(1, 1)
-        self.pac_man = self.pac_man.instance
+        self.pacman = pacman.PacMan(1, 1)
 
     def key_pressed(self, key, x, y):
         """The function called whenever a key is pressed.
@@ -54,19 +52,19 @@ class Main:
 
         if key == 100:
             print("LEFT arrow pressed")
-            self.pac_man.next_direction = 'W'
+            self.pacman.next_direction = 'W'
 
         elif key == 102:
             print("RIGHT arrow pressed")
-            self.pac_man.next_direction = 'E'
+            self.pacman.next_direction = 'E'
 
         elif key == 101:
             print("UP arrow pressed")
-            self.pac_man.next_direction = 'N'
+            self.pacman.next_direction = 'N'
 
         elif key == 103:
             print("DOWN arrow pressed")
-            self.pac_man.next_direction = 'S'
+            self.pacman.next_direction = 'S'
 
     def key_pressed_special_up(self, key, x, y):
         """"""
@@ -75,7 +73,7 @@ class Main:
     def get_pacman_possible_move(self):
         """"""
 
-        pos_x, pos_z = self.pac_man.pos_x, self.pac_man.pos_z
+        pos_x, pos_z = self.pacman.pos_x, self.pacman.pos_z
         pos_x_mod, pos_z_mod = pos_x % 1, pos_z % 1
         pos_x_floor, pos_z_floor = floor(pos_x), floor(pos_z)
 
@@ -135,26 +133,26 @@ class Main:
     def outside_board(self):
         """"""
 
-        if self.pac_man.pos_x < 0:
-            self.pac_man.pos_x = self.board.maze_row_len
+        if self.pacman.pos_x < 0:
+            self.pacman.pos_x = self.board.maze_row_len
 
-        elif self.pac_man.pos_x > self.board.maze_row_len:
-            self.pac_man.pos_x = 0
+        elif self.pacman.pos_x > self.board.maze_row_len:
+            self.pacman.pos_x = 0
 
-        if self.pac_man.pos_z < 0:
-            self.pac_man.pos_z = self.board.maze_len
+        if self.pacman.pos_z < 0:
+            self.pacman.pos_z = self.board.maze_len
 
-        elif self.pac_man.pos_z > self.board.maze_len:
-            self.pac_man.pos_z = 0
+        elif self.pacman.pos_z > self.board.maze_len:
+            self.pacman.pos_z = 0
 
     def collision_coin(self, coin):
         """"""
 
-        wall1 = self.pac_man.pos_x - coin.pos_x
-        wall2 = self.pac_man.pos_z - coin.pos_z
-        radius = self.pac_man.radius + coin.radius
+        wall1 = self.pacman.pos_x - coin.pos_x
+        wall2 = self.pacman.pos_z - coin.pos_z
+        radius = self.pacman.radius + coin.radius
 
-        if radius >= hypot(wall1, wall2):
+        if radius > hypot(wall1, wall2):
             if coin.super_coin:
                 self.board.super_coins.remove(coin)
             else:
@@ -172,18 +170,18 @@ class Main:
         gl.glRotate(60, 1, 0, 0)
 
         self.board.draw()
-        self.pac_man.draw()
+        self.pacman.draw()
 
-        if self.pac_man.next_direction and \
-           self.pac_man.pos_x % 1 == 0 and \
-           self.pac_man.pos_z % 1 == 0 and \
-           self.pac_man.next_direction in self.get_pacman_possible_move():
-            self.pac_man.direction = self.pac_man.next_direction
-            self.pac_man.next_direction = ''
+        if self.pacman.next_direction and \
+           self.pacman.pos_x % 1 == 0 and \
+           self.pacman.pos_z % 1 == 0 and \
+           self.pacman.next_direction in self.get_pacman_possible_move():
+            self.pacman.direction = self.pacman.next_direction
+            self.pacman.next_direction = ''
 
-        if self.pac_man.direction and \
-           self.pac_man.direction in self.get_pacman_possible_move():
-            self.pac_man.move()
+        if self.pacman.direction and \
+           self.pacman.direction in self.get_pacman_possible_move():
+            self.pacman.move()
 
         self.outside_board()
 
@@ -312,5 +310,5 @@ if __name__ == "__main__":
 
     # Print message to console, and kick off the main to get it rolling.
     print("Hit ESC key to quit.")
-    game = Main()
+    game = Main(board.maze)
     game.main()

@@ -1,9 +1,7 @@
-from board import SingleBoard
+from board import Board
 import solid_data as data
 
-
 # TODO Test for pyopengl function !!!!
-
 
 test_maze = [
     [1, 1, 1, 1, 1, 1, 1],
@@ -54,61 +52,60 @@ test_coins_positions = {
 }
 
 
-class TestSingleBoard:
+class TestBoard:
 
-    # Creation of board for testing
-    board = SingleBoard(test_maze)
-    board = board.instance
+    def setup_method(self):
+        self.board = Board(test_maze)
 
-    def test__board__init__1(self):
+    def test_board_init__1(self):
         """"""
         assert self.board.maze_len == len(test_maze)
 
-    def test__board__init__2(self):
+    def test_board_init__2(self):
         """"""
         assert self.board.maze_row_len == len(test_maze[0])
 
-    def test__board__init__3(self):
+    def test_board_init__3(self):
         """"""
         assert self.board.floor_level == data.FLOOR_LEVEL
 
-    def test__board__init__4(self):
+    def test_board_init__4(self):
         """"""
         assert self.board.floor_color == data.FLOOR_COLOR
 
-    def test__board__get_blosk_positions(self):
+    def test_board_get_blosk_positions(self):
         """"""
         for block in self.board.blocks:
             assert (block.pos_xw, block.pos_zn) in self.board.block_positions
 
-    def test__board__create_board_elements1(self):
+    def test_board_create_board_elements1(self):
         """"""
         assert len(self.board.blocks) == 35
 
-    def test__board__create_board_elements2(self):
+    def test_board_create_board_elements2(self):
         """"""
         for block in self.board.blocks:
             assert (block.pos_zn, block.pos_xw) in test_blocks_positions
 
-    def test__board__create_board_elements3(self):
+    def test_board_create_board_elements3(self):
         """"""
         for block in self.board.blocks:
             assert (block.pos_zn, block.pos_xw, block.walls) in test_blocks
 
-    def test_board__create_board_elements4(self):
+    def test_board_create_board_elements4(self):
         """"""
         assert len(self.board.coins) == 28
 
-    def test__board__create_board_elements5(self):
+    def test_board_create_board_elements5(self):
         """"""
         for coin in self.board.coins:
             assert (coin.pos_z, coin.pos_x) in test_coins_positions
 
-    def test__board_create_super_coins1(self):
+    def test_board_create_super_coins1(self):
         """"""
         assert len(self.board.super_coins) == self.board.super_coins_no == 5
 
-    def test__board_create_super_coins2(self):
+    def test_board_create_super_coins2(self):
         """"""
         for coin in self.board.super_coins:
             assert (coin.pos_z, coin.pos_x) in test_coins_positions
