@@ -1,11 +1,7 @@
 from OpenGL import GL as gl
 from OpenGL import GLUT as glut
 
-
-def set_color(color):
-    """Function sets the color."""
-    r, g, b = color
-    gl.glColor3f(r, g, b)
+from solid_data import set_color
 
 
 class PacMan:
@@ -15,12 +11,10 @@ class PacMan:
         self.direction = ''
         self.next_direction = ''
 
-        self.wall_top = 1  # height of celling
-        self.wall_bottom = -1.0  # height of floor
         self.radius = 0.5
-
         self.rotate = 0
         self.step = 0.1
+        self.color = 1, 1, 0
 
     def move(self):
 
@@ -44,11 +38,23 @@ class PacMan:
 
     def draw(self):
 
-        gl.glColor3f(0, 1, 0)
+        set_color(self.color)
 
         gl.glPushMatrix()
         gl.glTranslatef(self.pos_x + 0.5, 0.0, self.pos_z + 0.5)
         gl.glRotate(self.rotate, 0, 1, 0)
 
+        # gl.glBegin(gl.GL_TRIANGLE_FAN)
+        # gl.glColor3f(0, 1, 0)
+        # gl.glVertex2f(self.pos_x, self.pos_z)
+        # for i in range(13):  # Rysujemy okrag z odcietym malym kawalkiem
+        # Obrocony o podany offset.
+        #     # i = i + DisplayFunc.dolna + DisplayFunc.off
+        #     x = self.pos_x + 0.3 * sin(2 * pi * i / 24.0)
+        #     y = self.pos_z + 0.3 * cos(2 * pi * i / 24.0)
+        #     gl.glVertex2f(x, y)
+        #     gl.glEnd()
+
         glut.glutSolidSphere(self.radius, 10, 10)
         gl.glPopMatrix()
+

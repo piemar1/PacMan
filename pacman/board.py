@@ -158,10 +158,6 @@ class Block:
             gl.glVertex3f(pos_x, self.celing_level, self.pos_zs)
             gl.glEnd()
 
-        else:
-            print("ERROR during drawing vertical squares:"
-                  "function name: board._draw_vertical_square")
-
     def _draw_celling(self):
         """Function draw celing of the block."""
 
@@ -209,19 +205,22 @@ class Board:
 
         self.maze_len = len(maze)           # len of maze
         self.maze_row_len = len(maze[0])    # width of maze
-
         self.super_coins_no = 5              # number of super-coins
-
-        self.floor_level = data.FLOOR_LEVEL  # height of floor
-
-        self.floor_color = data.FLOOR_COLOR  # floor color
-
         self.blocks = []                     # blocks in the board
         self.coins = []                      # coins
+        self.ghost_nest_position = 14, 14    # position of the ghost nest
+
+        # dict of knots, key=position, value=possible directions of move
+        self.knots = {}
+
+        self.floor_level = data.FLOOR_LEVEL  # height of floor
+        self.floor_color = data.FLOOR_COLOR  # floor color
 
         self._create_board_elements(maze)
+        self._create_knots(maze)
         self.super_coins = self._create_super_coins()
         self.block_positions = self.get_block_positions()
+
 
     def get_block_positions(self):
 
@@ -269,6 +268,29 @@ class Board:
                         walls_append("S")
 
                     blocks_append(Block(sq_no, row_no, ''.join(walls)))
+
+    def _create_knots(self, maze):
+
+        for row_no, row in enumerate(maze):
+            for sq_no, square in enumerate(row):
+
+                if not bool(square) and bool(row_no) and bool(sq_no) and \
+                   row_no != self.maze_len-1 and sq_no != self.maze_row_len-1:
+
+                    direction = ""
+                    if not maze[row_no-1][sq_no]:
+                        direction += "N"
+                    if not maze[row_no][sq_no-1]:
+                        direction += "W"
+                    if not maze[row_no][sq_no+1]:
+                        direction += "E"
+                    if not maze[row_no+1][sq_no]:
+                        direction += "S"
+
+                    if len(direction) != 2 or \
+                       direction != "NS" and direction != "WE":
+                        self.knots[(sq_no, row_no)] = direction
+
 
     def _create_super_coins(self):
         """Function creates list of SuperCoin objects as a

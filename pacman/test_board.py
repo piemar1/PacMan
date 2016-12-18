@@ -4,51 +4,57 @@ import solid_data as data
 # TODO Test for pyopengl function !!!!
 
 test_maze = [
-    [1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 0, 1, 1, 1],
     [1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 1, 0, 0, 1],
+    [1, 0, 1, 0, 1, 0, 1],
+    [0, 0, 0, 0, 0, 0, 0],
+    [1, 0, 1, 0, 1, 0, 1],
     [1, 0, 1, 1, 1, 0, 1],
     [1, 0, 0, 1, 0, 0, 1],
     [1, 1, 0, 0, 0, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1]
+    [1, 1, 1, 0, 1, 1, 1]
 ]
 
+test_knots = {
+    (1, 1): "ES", (1, 3): "NWES", (1, 6): "NE",
+    (2, 6): "WS", (2, 7): "NE",
+    (3, 1): "NWES", (3, 3): "NWES", (3, 4): "N", (3, 7): "WES",
+    (4, 6): "ES", (4, 7): "NW",
+    (5, 1): "WS", (5, 3): "NWES", (5, 6): "NW",
+}
+
 test_blocks_positions = {
-    (0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6),
+    (0, 0), (0, 1), (0, 2), (0, 4), (0, 5), (0, 6),
     (1, 0), (1, 6),
-    (2, 0), (2, 6),
-    (3, 0), (3, 6),
-    (4, 0), (4, 3), (4, 6),
+    (2, 0), (2, 2), (2, 4), (2, 6),
+    (4, 0), (4, 2), (4, 4), (4, 6),
     (5, 0), (5, 2), (5, 3), (5, 4), (5, 6),
     (6, 0), (6, 3), (6, 6),
     (7, 0), (7, 1), (7, 5), (7, 6),
-    (8, 0), (8, 1), (8, 2), (8, 3), (8, 4), (8, 5), (8, 6),
+    (8, 0), (8, 1), (8, 2), (8, 4), (8, 5), (8, 6),
 }
 
 test_blocks = {
-    (0, 0, "NW"), (0, 1, "NS"), (0, 2, "NS"), (0, 3, "NS"),
-    (0, 4, "NS"), (0, 5, "NS"), (0, 6, "NE"),
+    (0, 0, "NW"), (0, 1, "NS"), (0, 2, "NES"), (0, 4, "NWS"), (0, 5, "NS"), (0, 6, "NE"),
     (1, 0, "WE"), (1, 6, "WE"),
-    (2, 0, "WE"), (2, 6, "WE"),
-    (3, 0, "WE"), (3, 6, "WE"),
-    (4, 0, "WE"), (4, 3, "NWE"), (4, 6, "WE"),
-    (5, 0, "WE"), (5, 2, "NWS"), (5, 3, ""), (5, 4, "NES"), (5, 6, "WE"),
+    (2, 0, "WES"), (2, 2, "NWES"), (2, 4, "NWES"), (2, 6, "WES"),
+    (4, 0, "NWE"), (4, 2, "NWE"), (4, 4, "NWE"), (4, 6, "NWE"),
+    (5, 0, "WE"), (5, 2, "WS"), (5, 3, "N"), (5, 4, "ES"), (5, 6, "WE"),
     (6, 0, "WE"), (6, 3, "WES"), (6, 6, "WE"),
     (7, 0, "W"), (7, 1, "NE"), (7, 5, "NW"), (7, 6, "E"),
-    (8, 0, "WS"), (8, 1, "S"), (8, 2, "NS"), (8, 3, "NS"), (8, 4, "NS"),
-    (8, 5, "S"), (8, 6, "ES"),
+    (8, 0, "WS"), (8, 1, "S"), (8, 2, "NES"), (8, 4, "NWS"), (8, 5, "S"), (8, 6, "ES"),
 }
 
 test_coins_positions = {
+    (0, 3),
     (1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
-    (2, 1), (2, 2), (2, 3), (2, 4), (2, 5),
-    (3, 1), (3, 2), (3, 3), (3, 4), (3, 5),
-    (4, 1), (4, 2), (4, 4), (4, 5),
+    (2, 1), (2, 3), (2, 5),
+    (3, 0), (3, 1), (3, 2), (3, 4), (3, 3), (3, 5), (3, 6),
+    (4, 1), (4, 3), (4, 5),
     (5, 1), (5, 5),
     (6, 1), (6, 2), (6, 4), (6, 5),
-    (7, 2), (7, 3), (7, 4)
+    (7, 2), (7, 3), (7, 4),
+    (8, 3)
 }
 
 
@@ -73,6 +79,12 @@ class TestBoard:
         """"""
         assert self.board.floor_color == data.FLOOR_COLOR
 
+    def test_board_create_knots(self):
+        """"""
+        for knot, direction in self.board.knots.items():
+            assert knot in test_knots.keys()
+            assert test_knots[knot] == direction
+
     def test_board_get_blosk_positions(self):
         """"""
         for block in self.board.blocks:
@@ -80,7 +92,7 @@ class TestBoard:
 
     def test_board_create_board_elements1(self):
         """"""
-        assert len(self.board.blocks) == 35
+        assert len(self.board.blocks) == 34
 
     def test_board_create_board_elements2(self):
         """"""
@@ -94,7 +106,7 @@ class TestBoard:
 
     def test_board_create_board_elements4(self):
         """"""
-        assert len(self.board.coins) == 28
+        assert len(self.board.coins) == 29
 
     def test_board_create_board_elements5(self):
         """"""

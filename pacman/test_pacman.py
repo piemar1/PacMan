@@ -8,11 +8,6 @@ class TestPacMan:
     def setup_method(self):
         self.pacman = PacMan(1, 1)
 
-    def test_set_pacman_to_proper_position(self):
-        """Function for seting pacman to proper position."""
-        self.pacman.pos_x = 1
-        self.pacman.pos_z = 1
-
     def test_pacman_init__1(self):
         """"""
         assert self.pacman.pos_x == 1
@@ -20,6 +15,19 @@ class TestPacMan:
     def test_pacman_init__2(self):
         """"""
         assert self.pacman.pos_z == 1
+
+    def test_pacman_init__3(self):
+        """"""
+        assert self.pacman.direction == ""
+
+    def test_pacman_init__4(self):
+        """"""
+        assert self.pacman.next_direction == ""
+
+    def test_pacman_init__5(self):
+        """PacMan step must be able to be mulitplied to 1"""
+        avaiable_step = (1, 0.5, 0.25, 0.2, 0.125, 0.1, 0.0625, 0.05)
+        assert self.pacman.step in avaiable_step
 
     def test_move1(self):
         """"""
@@ -68,3 +76,5 @@ class TestPacMan:
         pos, self.pacman.direction = self.pacman.pos_x, "E"
         self.pacman.move()
         assert self.pacman.pos_x == pos + self.pacman.step
+
+

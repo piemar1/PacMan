@@ -1,6 +1,7 @@
 import sys
 from time import time
-from math import floor, ceil, hypot
+from math import hypot
+from random import choice
 
 from OpenGL import GL as gl
 from OpenGL import GLUT as glut
@@ -8,6 +9,7 @@ from OpenGL import GLU as glu
 
 import board
 import pacman
+import ghost
 
 
 class Main:
@@ -30,7 +32,14 @@ class Main:
         self.board = board.Board(maze)
 
         # PacMan player creating
-        self.pacman = pacman.PacMan(1, 1)
+        self.pacman = pacman.PacMan(14, 18)
+
+        # Ghosts
+        self.ghost1 = ghost.Ghost(14, 6, "N", (1.0, 0.0, 1.0))
+        self.ghost2 = ghost.Ghost(14, 6, "W", (1.0, 0.0, 0.0))
+        self.ghost3 = ghost.Ghost(14, 6, "E", (0.0, 1.0, 1.0))
+
+        self.ghosts = [self.ghost1, self.ghost2, self.ghost3]
 
     def key_pressed(self, key, x, y):
         """The function called whenever a key is pressed.
@@ -51,101 +60,37 @@ class Main:
         # działanie klawiszy w osobnej funkcji
 
         if key == 100:
-            print("LEFT arrow pressed")
             self.pacman.next_direction = 'W'
 
         elif key == 102:
-            print("RIGHT arrow pressed")
             self.pacman.next_direction = 'E'
 
         elif key == 101:
-            print("UP arrow pressed")
             self.pacman.next_direction = 'N'
 
         elif key == 103:
-            print("DOWN arrow pressed")
             self.pacman.next_direction = 'S'
 
     def key_pressed_special_up(self, key, x, y):
         """"""
         pass
 
-    def get_pacman_possible_move(self):
+    def outside_board(self, object):
         """"""
 
-        pos_x, pos_z = self.pacman.pos_x, self.pacman.pos_z
-        pos_x_mod, pos_z_mod = pos_x % 1, pos_z % 1
-        pos_x_floor, pos_z_floor = floor(pos_x), floor(pos_z)
+        if object.pos_x < 0:
+            object.pos_x = self.board.maze_row_len-1
 
-        block_positions = self.board.block_positions
-        possible_moves = []
+        elif object.pos_x > self.board.maze_row_len-1:
+            object.pos_x = 0
 
-        if not any([bool(pos_x_mod), bool(pos_z_mod)]):
+        if object.pos_z < 0:
+            object.pos_z = self.board.maze_len-1
 
-            if (pos_x - 1, pos_z) not in block_positions:
-                possible_moves.append('W')
-            if (pos_x + 1, pos_z) not in block_positions:
-                possible_moves.append('E')
-            if (pos_x, pos_z - 1) not in block_positions:
-                possible_moves.append('N')
-            if (pos_x, pos_z + 1) not in block_positions:
-                possible_moves.append('S')
+        elif object.pos_z > self.board.maze_len-1:
+            object.pos_z = 0
 
-        elif pos_x_mod and not pos_z_mod:
-            possible_moves.append('WE')
-
-            blocks = [
-                (pos_x_floor, pos_z - 1),
-                (ceil(pos_x), pos_z - 1)
-            ]
-            if all([True if block not in block_positions
-                    else False for block in blocks]):
-                possible_moves.append('N')
-
-            blocks = [
-                (pos_x_floor, pos_z + 1),
-                (ceil(pos_x), pos_z + 1)
-            ]
-            if all([True if block not in block_positions
-                    else False for block in blocks]):
-                possible_moves.append('S')
-
-        elif not pos_x_mod and pos_z_mod:
-            possible_moves.append('NS')
-            blocks = [
-                (pos_x - 1, pos_z_floor - 1),
-                (pos_x - 1, pos_z_floor)
-            ]
-            if all([True if block not in block_positions
-                    else False for block in blocks]):
-                possible_moves.append('W')
-
-            blocks = [
-                (pos_x + 1, pos_z_floor - 1),
-                (pos_x + 1, pos_z_floor)
-            ]
-            if all([True if block not in block_positions
-                    else False for block in blocks]):
-                possible_moves.append('E')
-
-        return ''.join(possible_moves)
-
-    def outside_board(self):
-        """"""
-
-        if self.pacman.pos_x < 0:
-            self.pacman.pos_x = self.board.maze_row_len
-
-        elif self.pacman.pos_x > self.board.maze_row_len:
-            self.pacman.pos_x = 0
-
-        if self.pacman.pos_z < 0:
-            self.pacman.pos_z = self.board.maze_len
-
-        elif self.pacman.pos_z > self.board.maze_len:
-            self.pacman.pos_z = 0
-
-    def collision_coin(self, coin):
+    def collision_pacman_coin(self, coin):
         """"""
 
         wall1 = self.pacman.pos_x - coin.pos_x
@@ -154,11 +99,75 @@ class Main:
 
         if radius > hypot(wall1, wall2):
             if coin.super_coin:
+                print("     SUPER COIN     ")
+                print("    GHOST ARE SENSIBLE   ")
                 self.board.super_coins.remove(coin)
+                for one_ghost in self.ghosts:
+                    one_ghost.become_eatable()
+                    # TODO what if pacman eat 2 coins in short time!
             else:
                 self.board.coins.remove(coin)
 
-    def draw_gl_scene(self):
+    def collision_pacman_ghost(self, object):
+        """"""
+
+        wall1 = self.pacman.pos_x - object.pos_x
+        wall2 = self.pacman.pos_z - object.pos_z
+        radius = self.pacman.radius + object.radius
+
+        if radius > hypot(wall1, wall2):
+            if object.eatable:
+                print("     PACMAN EAT GHOST    ")
+                object.was_eaten = True
+            else:
+                print("    GHOST CATCHED PACMA     ")
+
+    def pacman_move(self):
+        """"""
+        directions = self.board.knots.get(
+            (self.pacman.pos_x, self.pacman.pos_z)
+        )
+        if directions:
+            if self.pacman.next_direction in directions:
+                self.pacman.direction = self.pacman.next_direction
+                self.pacman.move()
+            elif self.pacman.direction in directions:
+                self.pacman.move()
+            else:
+                pass   # PacMan no moves
+        else:
+            self.pacman.move()
+
+    def ghost_move(self, ghost):
+        """"""
+        # TODO TESTS !!!!!!!!!
+        directions = self.board.knots.get(
+            (ghost.pos_x, ghost.pos_z)
+        )
+
+        if not ghost.was_eaten:
+
+            if directions:
+                if len(directions) > 1:
+                    if ghost.next_direction in directions:
+                        ghost.direction = ghost.next_direction
+                        ghost.choice_next_direction()  # TODO tę metodę trzeba poprawić
+                        ghost.move()
+                    elif ghost.direction in directions:
+                        ghost.move()
+                    else:
+                        ghost.choice_next_direction()
+                elif len(directions) == 1:
+                    ghost.direction = directions
+                    ghost.move()
+            else:
+                ghost.move()
+
+        elif ghost.was_eaten:
+            pass
+        # TODO Code that drive ghost to the nest the shortest way
+
+    def draw_scene(self):
         """The function draws all game elements."""
 
         # Clear The Screen And The Depth Buffer
@@ -170,26 +179,23 @@ class Main:
         gl.glRotate(60, 1, 0, 0)
 
         self.board.draw()
+
         self.pacman.draw()
+        self.pacman_move()
+        self.outside_board(self.pacman)
 
-        if self.pacman.next_direction and \
-           self.pacman.pos_x % 1 == 0 and \
-           self.pacman.pos_z % 1 == 0 and \
-           self.pacman.next_direction in self.get_pacman_possible_move():
-            self.pacman.direction = self.pacman.next_direction
-            self.pacman.next_direction = ''
-
-        if self.pacman.direction and \
-           self.pacman.direction in self.get_pacman_possible_move():
-            self.pacman.move()
-
-        self.outside_board()
+        for one_ghost in self.ghosts:
+            one_ghost.draw()
+            one_ghost.become_not_eatable()
+            self.ghost_move(one_ghost)
+            self.outside_board(one_ghost)
+            self.collision_pacman_ghost(one_ghost)
 
         for coin in self.board.coins:
-            self.collision_coin(coin)
+            self.collision_pacman_coin(coin)
 
         for coin in self.board.super_coins:
-            self.collision_coin(coin)
+            self.collision_pacman_coin(coin)
 
         # counts number of frames
         self.fps()
@@ -288,13 +294,13 @@ class Main:
         glut.glutSpecialUpFunc(self.key_pressed_special_up)
 
         # Register the drawing function with glut.
-        glut.glutDisplayFunc(self.draw_gl_scene)
+        glut.glutDisplayFunc(self.draw_scene)
 
         # Uncomment this line to get full screen.
         # glut.glutFullScreen()
 
         # When we are doing nothing, redraw the scene.
-        glut.glutIdleFunc(self.draw_gl_scene)
+        glut.glutIdleFunc(self.draw_scene)
 
         # Register the function called when our window is resized.
         glut.glutReshapeFunc(self.re_size_gl_scene)
