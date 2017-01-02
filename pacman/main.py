@@ -1,7 +1,6 @@
 import sys
 from time import time
 from math import hypot
-from random import choice
 
 from OpenGL import GL as gl
 from OpenGL import GLUT as glut
@@ -10,6 +9,7 @@ from OpenGL import GLU as glu
 import board
 import pacman
 import ghost
+from solid_data import OPPOSITE_MOVES as op
 
 
 class Main:
@@ -135,6 +135,10 @@ class Main:
                 self.pacman.move()
             else:
                 pass   # PacMan no moves
+
+        elif self.pacman.next_direction == op[self.pacman.direction]:
+            self.pacman.direction = self.pacman.next_direction
+            self.pacman.move()
         else:
             self.pacman.move()
 
@@ -145,13 +149,15 @@ class Main:
             (ghost.pos_x, ghost.pos_z)
         )
 
+        print(directions)
         if not ghost.was_eaten:
 
             if directions:
                 if len(directions) > 1:
                     if ghost.next_direction in directions:
                         ghost.direction = ghost.next_direction
-                        ghost.choice_next_direction()  # TODO tę metodę trzeba poprawić
+                        # TODO tę metodę trzeba poprawić
+                        ghost.choice_next_direction()
                         ghost.move()
                     elif ghost.direction in directions:
                         ghost.move()

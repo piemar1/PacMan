@@ -22,7 +22,6 @@ class Ghost(PacMan):
 
     def choice_next_direction(self):
         """"""
-
         self.next_direction = choice(
             MOVES.replace(OPPOSITE_MOVES[self.direction], "")
         )
@@ -44,7 +43,7 @@ class Ghost(PacMan):
         if not self.eatable:
             # TODO color should be the same but more transparent
             # TODO TESTS
-            self.eatable, self.color = True, (0.35, 0.35, 0.35)
+            self.eatable, self.color = True, (0.75, 0.75, 0.75)
         self.eatable_time = time()
 
     def become_not_eatable(self):

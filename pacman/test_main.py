@@ -173,7 +173,7 @@ class TestMain:
         self.set_pacman_to_position(1, 2.26)
         self.board.super_coins.append(SuperCoin(1, 3))
         self.main.collision_pacman_coin(self.board.super_coins[-1])
-        assert self.ghost.color == (0.35, 0.35, 0.35)
+        assert self.ghost.color == (0.75, 0.75, 0.75)
 
     def test_collision_pacman_super_coin5(self):
         """Collision with super coin. Ghost become again normal after 10 sek"""
@@ -255,31 +255,36 @@ class TestMain:
         assert self.pacman.pos_z == 1 + self.pacman.step
 
     def test_pacman_move6(self):
-        """PacMan in knot, next_direction not in knot direction"""
-
-        self.set_pacman_to_position(1, 1)
-        self.pacman.next_direction = "N"
-        self.main.pacman_move()
-        assert self.pacman.pos_z == 1
-
-    def test_pacman_move7(self):
         """PacMan in knot, next_direction in knot direction"""
         self.set_pacman_to_position(1, 1)
         self.pacman.next_direction = "E"
         self.main.pacman_move()
         assert self.pacman.pos_x == 1 + self.pacman.step
 
+    def test_pacman_move7(self):
+        """PacMan in knot, next_direction in knot direction"""
+        self.set_pacman_to_position(1, 1)
+        self.pacman.next_direction = "E"
+        self.main.pacman_move()
+        assert self.pacman.direction == "E"
+
     def test_pacman_move8(self):
         """PacMan in knot, next_direction not in knot direction"""
+        self.set_pacman_to_position(1, 1)
+        self.pacman.next_direction = "N"
+        self.main.pacman_move()
+        assert self.pacman.pos_z == 1
 
+    def test_pacman_move9(self):
+        """PacMan in knot, next_direction not in knot direction"""
         self.set_pacman_to_position(1, 1)
         self.pacman.next_direction = "W"
         self.main.pacman_move()
         assert self.pacman.pos_x == 1
 
-        # TODO pacman.direction = pacman.next_direction
 
-####
+
+
     def test_ghost_move1(self):
         """Ghost outside knot"""
         self.set_ghost_to_position(1, 2)
@@ -322,8 +327,19 @@ class TestMain:
         self.main.ghost_move(self.ghost)
         assert self.ghost.pos_z == 1 + self.ghost.step
 
-    # TODO check new next direction
-    # TODO ghost.direction = ghost.next_direction
+    def test_ghost_move6a(self):
+        """Ghost in knot, next_direction in knot directions"""
+        self.set_ghost_to_position(1, 1)
+        self.ghost.next_direction = "S"
+        self.main.ghost_move(self.ghost)
+        assert self.ghost.direction == "S"
+
+    def test_ghost_move6b(self):
+        """Ghost in knot, next_direction in knot directions"""
+        self.set_ghost_to_position(1, 1)
+        self.ghost.next_direction = "S"
+        self.main.ghost_move(self.ghost)
+        assert self.ghost.next_direction in "NEW"
 
     def test_ghost_move7(self):
         """Ghost in knot, next_direction not in knot directions"""
@@ -337,8 +353,8 @@ class TestMain:
         self.set_ghost_to_position(1, 1)
         self.ghost.next_direction = "W"
         self.main.ghost_move(self.ghost)
-        assert self.ghost.pos_x == 1
-        # TODO check new next direction
+        assert self.ghost.next_direction in "NSE"
+        # TODO check new next direction  TEST NIE DZIAŁA PRAWIDŁOWO !!!!
 
 
     def test_ghost_move9(self):
