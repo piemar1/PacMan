@@ -149,7 +149,6 @@ class Main:
             (ghost.pos_x, ghost.pos_z)
         )
 
-        print(directions)
         if not ghost.was_eaten:
 
             if directions:

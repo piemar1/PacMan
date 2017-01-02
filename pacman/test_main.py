@@ -353,7 +353,7 @@ class TestMain:
         self.set_ghost_to_position(1, 1)
         self.ghost.next_direction = "W"
         self.main.ghost_move(self.ghost)
-        assert self.ghost.next_direction in "NSE"
+        assert self.ghost.next_direction in "W"
         # TODO check new next direction  TEST NIE DZIAŁA PRAWIDŁOWO !!!!
 
 
