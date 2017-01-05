@@ -10,7 +10,7 @@ import board
 import pacman
 import ghost
 from solid_data import OPPOSITE_MOVES as op
-
+from utils import time_fn
 
 class Main:
     """
@@ -172,6 +172,7 @@ class Main:
             pass
         # TODO Code that drive ghost to the nest the shortest way
 
+    @time_fn
     def draw_scene(self):
         """The function draws all game elements."""
 
