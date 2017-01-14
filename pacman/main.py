@@ -118,29 +118,32 @@ class Main:
         if radius > hypot(wall1, wall2):
             if object.eatable:
                 print("     PACMAN EAT GHOST    ")
-                object.was_eaten = True
-            else:
-                print("    GHOST CATCHED PACMA     ")
+                object.was_eaten_by_pacman()
+
+            elif isinstance(object, pacman.PacMan):
+                self.pacman.was_eaten = True
+                print("    GHOST CATCHED PACMAN     ")
 
     def pacman_move(self):
         """"""
         directions = self.board.knots.get(
             (self.pacman.pos_x, self.pacman.pos_z)
         )
-        if directions:
-            if self.pacman.next_direction in directions:
+        if not self.pacman.was_eaten:
+            if directions:
+                if self.pacman.next_direction in directions:
+                    self.pacman.direction = self.pacman.next_direction
+                    self.pacman.move()
+                elif self.pacman.direction in directions:
+                    self.pacman.move()
+                else:
+                    pass   # PacMan no moves
+
+            elif self.pacman.next_direction == op[self.pacman.direction]:
                 self.pacman.direction = self.pacman.next_direction
                 self.pacman.move()
-            elif self.pacman.direction in directions:
-                self.pacman.move()
             else:
-                pass   # PacMan no moves
-
-        elif self.pacman.next_direction == op[self.pacman.direction]:
-            self.pacman.direction = self.pacman.next_direction
-            self.pacman.move()
-        else:
-            self.pacman.move()
+                self.pacman.move()
 
     def ghost_move(self, ghost):
         """"""
@@ -162,15 +165,38 @@ class Main:
                         ghost.move()
                     else:
                         ghost.choice_next_direction()
+
                 elif len(directions) == 1:
                     ghost.direction = directions
+                    ghost.choice_next_direction()
                     ghost.move()
             else:
                 ghost.move()
 
-        elif ghost.was_eaten:
-            pass
-        # TODO Code that drive ghost to the nest the shortest way
+        else:
+            if ghost.the_way:
+                if directions:
+                    ghost.direction = ghost.the_way[0]
+                    ghost.move()
+                    ghost.the_way = ghost.the_way[1:]
+                else:
+                    ghost.move()
+
+            else:
+                if directions:
+                    ghost.find_path(
+                        self.board.maze_graph,
+                        self.board.ghost_nest_position
+                    )
+                    ghost.direction = ghost.the_way[0]
+                    ghost.move()
+                    ghost.the_way = ghost.the_way[1:]
+
+                else:
+                    ghost.move()
+
+            if (ghost.pos_z, ghost.pos_x) == self.board.ghost_nest_position:
+                ghost.start_from_nest()
 
     @time_fn
     def draw_scene(self):

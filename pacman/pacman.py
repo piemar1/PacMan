@@ -15,6 +15,7 @@ class PacMan:
         self.rotate = 0
         self.step = 0.1
         self.color = 1, 1, 0
+        self.was_eaten = False
 
     def move(self):
 
